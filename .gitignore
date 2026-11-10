@@ -53,3 +53,15 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# CMake build output folders
+Debug/
+Release/
+
+# Local backup of Copilot-modified files
+Copilot_Modified_Backup/
+
+# STM32CubeIDE / Eclipse workspace files
+.project
+.cproject
+.settings/
