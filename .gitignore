@@ -63,5 +63,4 @@ Copilot_Modified_Backup/
 
 # STM32CubeIDE / Eclipse workspace files
 .project
-.cproject
 .settings/
