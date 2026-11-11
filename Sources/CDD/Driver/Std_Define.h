@@ -48,6 +48,10 @@
 #define BOOL bool
 #endif
 
+#ifndef NULL_PTR
+#define NULL_PTR ((void *)0)
+#endif
+
 typedef uint8_t CDDDriverStatus;
 
 #define SATURATION(Var,Minval,Maxval)                                          /* PRQA S 3453 # Function macro is acceptable */ \

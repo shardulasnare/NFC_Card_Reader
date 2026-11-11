@@ -26,7 +26,9 @@ volatile uint16_t g_spi_byte_count  = 0U; /* Shared between SPI ISR and Normal C
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-status_t LPSPI_DRV_MasterDeinit(uint8_t instance)
+static status_t LPSPI_DRV_MasterAbortTransfer(uint32_t instance);
+
+status_t LPSPI_DRV_MasterDeinit(uint32_t instance)
 {
     LPSPI_Type *base = g_lpspiBase[instance];
     status_t errorCode = STATUS_SUCCESS;
@@ -34,13 +36,14 @@ status_t LPSPI_DRV_MasterDeinit(uint8_t instance)
     /* Disable clock and Module of LPSPI */
     LPSPI_HAL_DeInit(base, instance);
     /* Disable the interrupt */
-    Platform_SetIrq(g_lpspiIrqId[instance], 0);
+    /* TODO: Platform_SetIrq()/g_lpspiIrqId do not exist yet for STM32F411RE */
+    // Platform_SetIrq(g_lpspiIrqId[instance], 0);
     /* Clear the state pointer. */
     g_lpspiStatePtr[instance] = NULL;
     return errorCode;
 }
 
-status_t LPSPI_DRV_MasterTransfer(uint32 instance,                /*PRQA S 2889 # The return statement before end of function is used for simpler code structure and better readability. */
+status_t LPSPI_DRV_MasterTransfer(uint32_t instance,                /*PRQA S 2889 # The return statement before end of function is used for simpler code structure and better readability. */
                                         const volatile uint8_t * const sendBuffer,
 										volatile  uint8_t * receiveBuffer,
                                         uint16_t frameCount)
@@ -57,7 +60,10 @@ status_t LPSPI_DRV_MasterTransfer(uint32 instance,                /*PRQA S 2889 
         //Abort the transfer
        (void)LPSPI_DRV_MasterAbortTransfer(instance);
        //Call the callback function
-        lpspiState->callBack(lpspiState->status);
+        if(lpspiState->callBack != NULL)
+        {
+            lpspiState->callBack(lpspiState->status);
+        }
         return STATUS_BUSY;
     }
 
@@ -77,9 +83,12 @@ status_t LPSPI_DRV_MasterTransfer(uint32 instance,                /*PRQA S 2889 
     // TODO SPI: Replace with HAL
     if(lpspiState->transferType == LPSPI_USING_INTERRUPTS)
     {
-        /* Check RX and TX buffers */
-        while(~(((base->SR) >> 1U) & 1U));
-        while(((base->SR) & 1U));
+        /* Wait for TXE, then drain any stale RX data */
+        while(!(((base->SR) >> 1U) & 1U));
+        while(((base->SR) & 1U) != 0U)
+        {
+            (void)base->DR;
+        }
         LPSPI_HAL_SetIntMode(base, LPSPI_RX_DATA_INT_ENABLE, true);
         LPSPI_HAL_SetControlReg1(base, &Ctrl1CfgSet[instance]);
         LPSPI_HAL_WriteData(base, lpspiState->txBuff[g_spi_byte_count]);
@@ -193,6 +202,7 @@ static status_t LPSPI_DRV_MasterAbortTransfer(uint32_t instance)
 
 void SPI1_IRQHandler(void)
 {
+    const uint32_t instance = LPSPI1;
     lpspi_state_t * lpspiState = g_lpspiStatePtr[instance];
     LPSPI_Type *base = g_lpspiBase[instance];
 
@@ -202,7 +212,7 @@ void SPI1_IRQHandler(void)
         spiErrCounter[instance]++;
         LPSPI_HAL_SetIntMode(base, LPSPI_RX_DATA_INT_ENABLE, false);
         lpspiState->status = LPSPI_TRANSFER_ERROR;
-        if(lpspiState->callBack != NULL_PTR)
+        if(lpspiState->callBack != NULL)
         {
             lpspiState->callBack(lpspiState->status);
         }
@@ -229,7 +239,7 @@ void SPI1_IRQHandler(void)
     	while(LPSPI_HAL_GetStatusFlag(base,STATUS_LPSPI_MODULE_BUSY));
         lpspiState->status = LPSPI_TRANSFER_OK;
         cs_high();
-        if(lpspiState->callBack != NULL_PTR)
+        if(lpspiState->callBack != NULL)
         {
             lpspiState->callBack(lpspiState->status);
         }
@@ -286,12 +296,14 @@ void LPSPI_DRV_MasterInitCfg(uint8_t lu8_vInstance, lpspi_state_t *lstr_vStatePt
     LPSPI_HAL_Init(base, lu8_vInstance);
     LPSPI_HAL_SetMasterSlaveMode(base, true);
     LPSPI_HAL_SetPcsHandling(base,true);
-    LPSPI_HAL_Enable(base);    // Enable Module
 
     Ctrl1CfgSet[lu8_vInstance].lsbFirst = lstr_vMasterConfig->lsbFirst;
     Ctrl1CfgSet[lu8_vInstance].BR =  lstr_vMasterConfig->baudrate;
     Ctrl1CfgSet[lu8_vInstance].clkPhase = lstr_vMasterConfig->clkPhase;
     Ctrl1CfgSet[lu8_vInstance].clkPolarity = lstr_vMasterConfig->clkPolarity;
+    /* BR/CPOL/CPHA must be configured while SPE = 0 */
+    LPSPI_HAL_SetControlReg1(base, &Ctrl1CfgSet[lu8_vInstance]);
+    LPSPI_HAL_Enable(base);    // Enable Module
 
     lstr_vStatePtr->callBack = lstr_vMasterConfig->callBack;
     lstr_vStatePtr->transferType = lstr_vMasterConfig->transferType;

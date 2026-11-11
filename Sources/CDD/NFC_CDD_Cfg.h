@@ -80,7 +80,7 @@ typedef enum E_NFC_msgIdType_
 	RMSG_ANALOG_TEST_REG,
 	RMSG_TEST_DAC1_REG,
 	RMSG_TEST_DAC2_REG,
-	RMSG_AUTO_TEST_REG,
+	RMSG_TEST_ADC_REG,
     RMSG_NULL_REG,       /* Read register 00 to get response to previous read */
     RMSG_LAST,           /* Last Read Message */
 

@@ -24,6 +24,7 @@ Global and Static variable declaration
 *******************************************************************************/
 static uint8_t s_ETSNFCCDDStatus = 0u;
 static uint8 s_ETSNFCInitRetryCount = 0u;
+volatile bool gu8_fForceMCURun = false;
 
 /*****************************************************************************
 ** Function name: Test_BSW_InitTask
@@ -53,4 +54,16 @@ void Test_ETS_InitTask(void)
         else
         {}
     }
+}
+
+/*****************************************************************************
+** Function name: ETS_Task
+** Description  : Cyclic test task called in MCU RUN state
+** Parameter X  : void
+** Return value : void
+** Remarks      : -
+******************************************************************************/
+void ETS_Task(void)
+{
+    /* TODO: add RUN-mode test logic */
 }

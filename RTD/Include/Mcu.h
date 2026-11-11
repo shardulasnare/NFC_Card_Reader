@@ -13,13 +13,13 @@
 
 /* Macro Definitions */
 /* Pin Configurtion Macros */
-#define GPIOA_MODER_REG          *((volatile const uint32_t * const)(0x40020000u))
-#define GPIOA_ODR_REG            *((volatile const uint32_t * const)(0x40020014u))
-#define GPIOA_AFRL_REG           *((volatile const uint32_t * const)(0x40020020u))
+#define GPIOA_MODER_REG          (*((volatile uint32_t *)(0x40020000u)))
+#define GPIOA_ODR_REG            (*((volatile uint32_t *)(0x40020014u)))
+#define GPIOA_AFRL_REG           (*((volatile uint32_t *)(0x40020020u)))
 
 /* NVIC ISER Register */
-#define NVIC_ISER1_REG           *((volatile const uint32_t * const)(0xE000E104u))
-#define NVIC_IPR8_REG            *((volatile const uint32_t * const)(0xE000E420u))
+#define NVIC_ISER1_REG           (*((volatile uint32_t *)(0xE000E104u)))
+#define NVIC_IPR8_REG            (*((volatile uint32_t *)(0xE000E420u)))
 
 /* Function Prototypes */
 void Mcu_InitClock(void);

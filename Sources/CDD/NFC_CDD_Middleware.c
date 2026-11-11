@@ -22,6 +22,18 @@ uint8_t gau8_vMFRC522_rb[NUMBER_OF_MC_CHIPS][MC_REGINDEX_RESERVED + 1u]; /*
 uint8_t gau8_vMFRC522_wr[NUMBER_OF_MC_CHIPS][MC_REGINDEX_RESERVED + 1u];
 uint8 gu8_fErrorAggregate = FALSE;
 
+CDDDriverStatus genu_vNFCCDDState = CDD_STANDBY;
+uint8_t gu8_cNFCInitRtrCnt = 0u;
+uint8_t gu8_cNFCShutRtrCnt = 0u;
+CDD_TrxStatus genu_vNFCShutStatus = CDD_TRX_NOT_STARTED;
+NFC_CDDErrorType guni_vCDDErrors;
+NFC_msgErrorType gauni_vMsgErrors;
+uint8_t gu8_vSavedCDDErrors = 0u;
+uint8_t gu8_vSavedMsgErrors = 0u;
+uint8_t gu8_vRegAddress = 0u;
+
+static void ComposeDynMsg(E_NFC_msgIdType l_vMsgId);
+
 /*******************************************************************************
  **    Function Definitions
  ******************************************************************************/
@@ -45,11 +57,11 @@ void CDD_NFC_Task(void)
         /* Decode sequence sent (if any) in the previous cycle */
         SeqsDecode();
 
-        /* Clear all flags and parameters in preparation for the next cycle */
-        NFC_clearAllParam();
-
         /* Update the NFC CDD State in response to various events */
         Update_NFCCDDState();
+
+        /* Clear all flags and parameters in preparation for the next cycle */
+        NFC_clearAllParam();
     }
     else
     {
@@ -255,24 +267,39 @@ void CDD_NFC_StartInitSequence(void)
     {
         AddSeqToQueue(&gastr_vSeqList[MC_SOFTRESET]);
         genu_vNFCInitStatus = NFCINITSTATUS_DEVICEID_READ;
+        NFC_DriverStartTransmit();
     }
     else if(genu_vNFCInitStatus == NFCINITSTATUS_DEVICEID_READ)
     {
         if((gau8_vMFRC522_rb[0u][MC_REGINDEX_VERSIONREG] & 0xFFu) == 0x82U)
         {
             genu_vNFCInitStatus = NFCINITSTATUS_STARTED;
+            AddSeqToQueue(&gastr_vSeqList[MC_READDEVID]);
+            NFC_DriverStartTransmit();
         }
         else
         {
             AddSeqToQueue(&gastr_vSeqList[MC_READDEVID]);
             genu_vNFCInitStatus = NFCINITSTATUS_DEVICEID_READ;
+            NFC_DriverStartTransmit();
         }
     }
     else
     {
         return;
     }
-    NFC_DriverStartTransmit();
+}
+
+/*******************************************************************************
+ ** Function name    : CDD_NFC_StartPDSequence
+ ** Description      : Initiates sending of Power-down sequence to MFRC522
+ ** Parameters       : void
+ ** Return value     : void
+ ** Remarks          :
+ ******************************************************************************/
+void CDD_NFC_StartPDSequence(void)
+{
+    /* TODO: add a power-down sequence to gastr_vSeqList and queue it here */
 }
 
 
@@ -331,10 +358,10 @@ void AddSeqToQueue(const NFC_seqType * const lps_vCurrSeq)
 void ParseMsg(const E_NFC_msgIdType lptr_vMsgList[], const uint32 lu32_vMsgCount)
 {
     uint32_t lu32_cMsgIndex = 0u;
-    NFC_msg16Type luni_vCurrMsg;
     E_NFC_msgIdType lenu_vMsg;
+    uint8_t data;
     E_NFC_regIndexType regIndex;
-    NFC_msgErrorType *lptruni_fMsgErrors = &gauni_vMsgErrors;
+//    NFC_msgErrorType *lptruni_fMsgErrors = &gauni_vMsgErrors;
 
     while(lu32_cMsgIndex < lu32_vMsgCount)
     {
@@ -342,43 +369,28 @@ void ParseMsg(const E_NFC_msgIdType lptr_vMsgList[], const uint32 lu32_vMsgCount
 
         if(lenu_vMsg < RMSG_LAST)
         {
-            NFC_popFromRxBuff(&(luni_vCurrMsg.u8[0]), 1);
-
-//            if(NFC_GetCrc(luni_vCurrMsg.u8) == luni_vCurrMsg.bf.crc)
-//            {
-                if(luni_vCurrMsg.bf.rw != MC_NFC_NOP)
-                {
-                    regIndex = genu_MCRegAddrToIndex[luni_vCurrMsg.bf.reg];
-                    gau8_vMFRC522_rb[0u][regIndex] = luni_vCurrMsg.bf.data;
-                }
-                else
-                {
-                    /* #ERROR: DEV ID mismatch */
-                    lptruni_fMsgErrors->m48.DEVIDERR = TRUE;
-                    gu8_fErrorAggregate = TRUE;
-
-                    // @TODO NFC MSG: Check Message Counter after device ID
-                }
-//            }
+        	NFC_popFromRxBuff(&data, 1);
+        	regIndex = genu_MCRegAddrToIndex[(((gauni_vMsgsList[lenu_vMsg].u8[0]) >> 1u) & 0x3Fu)];
+        	gau8_vMFRC522_rb[0u][regIndex] = data;
+        }
+//        else
+//        {
+//        	/* #ERROR: DEV ID mismatch */
+//        	lptruni_fMsgErrors->m48.DEVIDERR = TRUE;
+//        	gu8_fErrorAggregate = TRUE;
+//        }
+//        	            }
 //            else
 //            {
 //                /* #ERROR: CRC mismatch */
 //                lptruni_fMsgErrors->m48.CRCERROR = TRUE;
-                gu8_fErrorAggregate = TRUE;
-//            }
-        }
+//                gu8_fErrorAggregate = TRUE;
+////            }
+//        }
         else
         {
-            uint32 lu32_cMsgCtr;
-            /* Static and dynamic messages, generally grouped together, will be discarded */
-            lu32_cMsgCtr = lu32_cMsgIndex;
-            do {
-                lu32_cMsgIndex++;
-            } while((lptr_vMsgList[lu32_cMsgIndex] > RMSG_LAST)
-                    && (lu32_cMsgIndex < lu32_vMsgCount));
-
-            /* We have the number of static messages. Discard their response */
-            NFC_popFromRxBuff(NULL, (lu32_cMsgIndex - lu32_cMsgCtr));
+        	/* We have the number of static messages. Discard their response */
+        	NFC_popFromRxBuff(NULL, 2);
         }
         lu32_cMsgIndex++;
     }
@@ -392,7 +404,7 @@ void ParseMsg(const E_NFC_msgIdType lptr_vMsgList[], const uint32 lu32_vMsgCount
  ** Return value     : void
  ** Remarks          :
  ******************************************************************************/
-static uint32 ComposeDynMsg(E_NFC_msgIdType l_vMsgId)
+static void ComposeDynMsg(E_NFC_msgIdType l_vMsgId)
 {
     NFC_msg16Type luni_vMsg;
     E_NFC_regIndexType regIndex;
@@ -403,7 +415,6 @@ static uint32 ComposeDynMsg(E_NFC_msgIdType l_vMsgId)
     regIndex = genu_MCRegAddrToIndex[luni_vMsg.bf.reg];
     luni_vMsg.bf.data = gau8_vMFRC522_wr[0u][regIndex];
     NFC_addToTxBuff(&luni_vMsg.u16, l_vMsgId);
-    return lu32_cSeqLen;
 }
 
 /*******************************************************************************
@@ -429,11 +440,11 @@ void ComposeDynMsg_RD_WR(E_NFC_msgIdType l_vMsgId)
     else if(luni_vMsg.bf.rw == MC_NFC_WRITE)
     {
         regIndex = genu_MCRegAddrToIndex[luni_vMsg.bf.reg];
-        luni_vMsg.bf.data = gau16_vMFRC522_wr[0u][regIndex];
+        luni_vMsg.bf.data = gau8_vMFRC522_wr[0u][regIndex];
     }
     else
     {
         ;/* Do Nothing */
     }
-    NFC_addToTxBuff(&luni_vMsg.u8, l_vMsgId);
+    NFC_addToTxBuff(&luni_vMsg.u16, l_vMsgId);
 }

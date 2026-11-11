@@ -31,4 +31,27 @@ typedef enum CDD_TrxStatus_
     CDD_TRX_MCALERROR = 3u
 } CDD_TrxStatus;
 
+typedef union NFC_CDDErrorType_
+{
+    uint8_t u8;
+    struct
+    {
+        uint8_t SEQINCOMP :1;
+        uint8_t SPICOMM   :1;
+        uint8_t STATEERR  :1;
+        uint8_t RESERVED  :5;
+    } bf;
+} NFC_CDDErrorType;
+
+typedef union NFC_msgErrorType_
+{
+    uint8_t u8;
+    struct
+    {
+        uint8_t DEVIDERR :1;
+        uint8_t CRCERROR :1;
+        uint8_t RESERVED :6;
+    } m48;
+} NFC_msgErrorType;
+
 #endif /* SOURCES_CDD_NFC_CDD_DEVCFG_H_ */

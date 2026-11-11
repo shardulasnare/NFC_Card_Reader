@@ -36,7 +36,6 @@ void SetASWShutdownRequest(bool lu8_NVMRequest, bool lu8_PowerDownMode,
 {
     bool lu8_fAcceptance = TRUE;
     bool lu8_fNFCPDAccepted = 0u;
-    bool lu8_fPMICStabdbyAccepted = 0u;
 
     if(SET == lu8_PowerDownMode)
     {

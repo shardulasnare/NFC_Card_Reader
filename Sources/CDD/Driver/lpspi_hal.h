@@ -116,13 +116,13 @@ static inline void LPSPI_HAL_Enable(LPSPI_Type * base)
 
 static inline bool LPSPI_HAL_IsModuleEnabled(const LPSPI_Type * base)
 {
-    return (bool)((base->CR1) >> 6U);
+    return (bool)(((base->CR1) >> 6U) & 1U);
 }
 
 static inline bool LPSPI_HAL_GetStatusFlag(const LPSPI_Type * base,
                                            lpspi_status_flag_t statusFlag)
 {
-    return (bool)((base->SR)  >> statusFlag);
+    return (bool)(((base->SR) >> statusFlag) & 1U);
 }
 
 static inline void LPSPI_HAL_SetIntMode(LPSPI_Type * base, lpspi_int_flag_t interruptSrc, bool enable)
@@ -140,7 +140,7 @@ static inline void LPSPI_HAL_SetIntMode(LPSPI_Type * base, lpspi_int_flag_t inte
 static inline bool LPSPI_HAL_GetIntMode(const LPSPI_Type * base,
 		lpspi_int_flag_t interruptSrc)
 {
-    return (bool)((base->CR2) >> (uint8_t)interruptSrc);
+    return (bool)(((base->CR2) >> (uint8_t)interruptSrc) & 1U);
 }
 
 static inline void LPSPI_HAL_SetTxDmaCmd(LPSPI_Type * base, bool enable)

@@ -27,9 +27,6 @@ E_NFC_seqIdType gaenu_vSeqsToSend[MC_LAST_SEQ]; /*
 uint8_t gu8_cSeqQCount = 0; /*
     Description: Number of sequences in the transmission queue */
 uint8_t gu8_cSeqQIndex;
-/* Description: Transmission configuration for each sub-sequence */
-volatile NFC_CVBrownOutStatus genu_fCvBrownoutError; /*
-    Description: Number of times brown out error ocurred */
 volatile CDD_TrxStatus genu_vNFCTrxStatus;
 static volatile uint8 su8_vCurrSeqTransmitIndex = 0u;
 /*******************************************************************************
@@ -69,13 +66,14 @@ void NFC_DriverStartTransmit(void)
 {
 	su8_vCurrSeqTransmitIndex = 0u;
 	su32_vTrxIndex = 0u;
-	NFC_seqType *lstr_vSeq = &gastr_vSeqList[gaenu_vSeqsToSend[su8_vCurrSeqTransmitIndex]];
+	const NFC_seqType *lstr_vSeq = &gastr_vSeqList[gaenu_vSeqsToSend[su8_vCurrSeqTransmitIndex]];
+	uint16_t lu16_vFrameCnt = lstr_vSeq->msgCount;
     genu_vNFCTrxStatus = CDD_TRX_INPROGRESS;
-    if(lstr_vSeq->FrameType == WRITE_SEQUENCES) lstr_vSeq->msgCount *= 2u;
+    if(lstr_vSeq->FrameType == WRITE_SEQUENCES) lu16_vFrameCnt *= 2u;
 
     /* Configure EDMA with the number of subsequences and the length of first
      * subsequence to be transmitted */
-    (void)LPSPI_DRV_MasterTransfer(LPSPINFC, (const uint8_t *)&gau8_vNFCTxBuff[su32_vTrxIndex], (uint8_t *)&gau8_vNFCRxBuff[su32_vTrxIndex],  lstr_vSeq->msgCount);
+    (void)LPSPI_DRV_MasterTransfer(LPSPINFC, (const uint8_t *)&gau8_vNFCTxBuff[su32_vTrxIndex], (uint8_t *)&gau8_vNFCRxBuff[su32_vTrxIndex],  lu16_vFrameCnt);
 }
 
 /*******************************************************************************
@@ -88,25 +86,21 @@ void NFC_addToTxBuff(const uint16_t *lu16_vSrcData, E_NFC_msgIdType lu32_vMsgId)
 {
     volatile uint8_t *src;
     volatile uint8_t *dst;
+    uint8_t lu8_vMsgLen = (lu32_vMsgId < RMSG_LAST) ? 1u : 2u;
     /* Check if data to be added overflows the buffer */
-    if(su32_vSpiTxIndex < NFC_BUFF_LEN)
+    if((su32_vSpiTxIndex + lu8_vMsgLen) < NFC_BUFF_LEN)
     {
     	dst = (uint8_t *)&gau8_vNFCTxBuff[su32_vSpiTxIndex];
     	src = (uint8_t *)lu16_vSrcData;
-    	if(lu32_vMsgId < RMSG_LAST){
+    	if(lu8_vMsgLen == 1u){
     		dst[0] = src[0];
-    		dst ++;
-    		su32_vSpiTxIndex ++;
     	}
-    	else if(lu32_vMsgId < DMSG_LAST)
+    	else
     	{
     		dst[0u] = src[1u];
     		dst[1u] = src[0u];
-    		dst ++;
-    		src ++;
-    		su32_vSpiTxIndex +=2;
     	}
-
+    	su32_vSpiTxIndex += lu8_vMsgLen;
     }
     else
     {
@@ -123,7 +117,7 @@ void NFC_addToTxBuff(const uint16_t *lu16_vSrcData, E_NFC_msgIdType lu32_vMsgId)
  ** Return value     : void
  ** Remarks          :
  ******************************************************************************/
-void NFC_popFromRxBuff(uint16_t * lptru16_vDst,  uint32_t_t lu32_vLength)
+void NFC_popFromRxBuff(uint8_t *lptru8_vDst,  uint32_t lu32_vLength)
 {
     uint32_t lu32_cLenCtr;
     volatile uint8_t *src;
@@ -134,7 +128,7 @@ void NFC_popFromRxBuff(uint16_t * lptru16_vDst,  uint32_t_t lu32_vLength)
     {
         ; /* Nothing to do here */
     }
-    else if(NULL == lptru16_vDst)
+    else if(NULL == lptru8_vDst)
     {
         /* If null pointer is passed as destination, data is discarded
          * i.e. stack index is incremented */
@@ -145,7 +139,7 @@ void NFC_popFromRxBuff(uint16_t * lptru16_vDst,  uint32_t_t lu32_vLength)
         /* If data is to be written to buffer, this function will copy
          * lu32_cLenCtr count of values */
         src = (uint8_t *)&gau8_vNFCRxBuff[su32_vSpiRxIndex];
-        dst = (uint8_t *)lptru16_vDst;
+        dst = lptru8_vDst;
         for(lu32_cLenCtr = 0u; lu32_cLenCtr < lu32_vLength; lu32_cLenCtr++)
         {
             dst[0u] = src[0u];
@@ -165,9 +159,9 @@ void NFC_popFromRxBuff(uint16_t * lptru16_vDst,  uint32_t_t lu32_vLength)
 void NFC_DisableAllInterrupts(void)
 {
     /* Disable LPSPI Interrupts */
-    LPSPI_HAL_SetIntMode(IP_LPSPI_2, LPSPI_RX_DATA_INT_ENABLE, false);                     // PRQA S:HWRegAccess 0306 # Typecast required for h/w register access
-    LPSPI_HAL_SetIntMode(IP_LPSPI_2, LPSPI_ERROR_INT_ENABLE, false);
-    LPSPI_HAL_SetIntMode(IP_LPSPI_2, LPSPI_TX_DATA_INT_ENABLE, false);
+    LPSPI_HAL_SetIntMode(IP_LPSPI_1, LPSPI_RX_DATA_INT_ENABLE, false);                     // PRQA S:HWRegAccess 0306 # Typecast required for h/w register access
+    LPSPI_HAL_SetIntMode(IP_LPSPI_1, LPSPI_ERROR_INT_ENABLE, false);
+    LPSPI_HAL_SetIntMode(IP_LPSPI_1, LPSPI_TX_DATA_INT_ENABLE, false);
 }
 
 /*******************************************************************************
@@ -178,7 +172,7 @@ void NFC_DisableAllInterrupts(void)
  ******************************************************************************/
 void lpspiNFCCB(transfer_status_t status)
 {
-    NFC_seqType *lstr_vSeq = &gastr_vSeqList[gaenu_vSeqsToSend[su8_vCurrSeqTransmitIndex]];
+    const NFC_seqType *lstr_vSeq = &gastr_vSeqList[gaenu_vSeqsToSend[su8_vCurrSeqTransmitIndex]];
     if(status != LPSPI_TRANSFER_OK)
     {
         genu_vNFCTrxStatus = CDD_TRX_MCALERROR;
@@ -199,9 +193,10 @@ void lpspiNFCCB(transfer_status_t status)
     {
     	/* Need to replace logic as per STM32F411RE */
         /* Enable timer for MC33772C conversion to get over */
-        count = (gastr_vSubSeqParam[su32_vSubSeqIndex].timeStall * 30u) - 1u;
-        Gpt_EnableNotification(GptConf_GptChannelConfiguration_CDD_NFC_TransferStallTimer);
-        Gpt_StartTimer(GptConf_GptChannelConfiguration_CDD_NFC_TransferStallTimer, count);
+        /* TODO: no GPT driver yet - count, gastr_vSubSeqParam, su32_vSubSeqIndex and Gpt_* are undefined */
+        // count = (gastr_vSubSeqParam[su32_vSubSeqIndex].timeStall * 30u) - 1u;
+        // Gpt_EnableNotification(GptConf_GptChannelConfiguration_CDD_NFC_TransferStallTimer);
+        // Gpt_StartTimer(GptConf_GptChannelConfiguration_CDD_NFC_TransferStallTimer, count);
         su8_vCurrSeqTransmitIndex ++;
     }
     else
@@ -217,7 +212,7 @@ void lpspiNFCCB(transfer_status_t status)
         {
             /* Reset the subsequence parameters since next sequence may be
              * added at any time after this point */
-            u8_vCurrSeqTransmitIndex = 0u;
+            su8_vCurrSeqTransmitIndex = 0u;
             su32_vTrxIndex = 0u;
             /* Mark this transfer as complete */
             genu_vNFCTrxStatus = CDD_TRX_COMPLETE;

@@ -34,7 +34,7 @@ const NFC_msg16Type gauni_vMsgsList[MSG_LIST_END] =
     {0x008Cu}, /* RMSG_ERROR_REG */
     {0x008Eu}, /* RMSG_STATUS1_REG */
     {0x0090u}, /* RMSG_STATUS2_REG */
-    {0x0094u}, /* RMSG_FIFO_DATA_REG */
+    {0x0092u}, /* RMSG_FIFO_DATA_REG */
     {0x0096u}, /* RMSG_WATER_LEVEL_REG */
     {0x0098u}, /* RMSG_CONTROL_REG */
     {0x009Au}, /* RMSG_BIT_FRAMING_REG */
@@ -74,7 +74,7 @@ const NFC_msg16Type gauni_vMsgsList[MSG_LIST_END] =
     {0x00F0u}, /* RMSG_ANALOG_TEST_REG */
     {0x00F2u}, /* RMSG_TEST_DAC1_REG */
     {0x00F4u}, /* RMSG_TEST_DAC2_REG */
-    {0x00F6u}, /* RMSG_AUTO_TEST_REG */
+    {0x00F6u}, /* RMSG_TEST_ADC_REG */
     {0x0000u}, /* RMSG_NULL_REG */
     {0x0000u}, /* RMSG_LAST */
     /***************************** Writes Messages ******************************/
@@ -110,7 +110,6 @@ const NFC_seqType gastr_vSeqList[MC_LAST_SEQ] =
 
 const E_NFC_regIndexType genu_MCRegAddrToIndex[MC_REGADDR_INVALIDREG + 1u] = {
     MC_REGINDEX_RESERVED,
-	MC_REGINDEX_RESERVED,
     MC_REGINDEX_COMMANDREG,
     MC_REGINDEX_COMIENRRG,
     MC_REGINDEX_DIVIENREG,
@@ -125,6 +124,7 @@ const E_NFC_regIndexType genu_MCRegAddrToIndex[MC_REGADDR_INVALIDREG + 1u] = {
     MC_REGINDEX_CONTROLREG,
     MC_REGINDEX_BITFRAMINGREG,
     MC_REGINDEX_COLLREG,
+	MC_REGINDEX_RESERVED,
 	MC_REGINDEX_RESERVED,
     MC_REGINDEX_MODEREG,
     MC_REGINDEX_TXMODEREG,

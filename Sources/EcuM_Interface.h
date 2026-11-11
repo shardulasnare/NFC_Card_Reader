@@ -28,6 +28,8 @@ typedef enum MCU_States_t_
     MCU_STATE_SHUTDOWN2,
 } MCU_States_t;
 
+extern MCU_States_t genu_vMCUState;
+
 /******************************************************************************
  ** Function external linkage
  ******************************************************************************/

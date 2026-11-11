@@ -11,35 +11,35 @@
 #include "Std_Define.h"
 
 typedef struct {
-	uint32_t RCC_CR;
-	uint32_t RCC_PLLCFGR;
-	uint32_t RCC_CFGR;
-	uint32_t RCC_CIR;
-	uint32_t RCC_AHB1RSTR;
-	uint32_t RCC_AHB2RSTR;
+	volatile uint32_t RCC_CR;
+	volatile uint32_t RCC_PLLCFGR;
+	volatile uint32_t RCC_CFGR;
+	volatile uint32_t RCC_CIR;
+	volatile uint32_t RCC_AHB1RSTR;
+	volatile uint32_t RCC_AHB2RSTR;
 	uint32_t RESERVED[2];
-	uint32_t RCC_APB1RSTR;
-	uint32_t RCC_APB2RSTR;
+	volatile uint32_t RCC_APB1RSTR;
+	volatile uint32_t RCC_APB2RSTR;
 	uint32_t RESERVED_1[2];
-	uint32_t RCC_AHB1ENR;
-	uint32_t RCC_AHB2ENR;
+	volatile uint32_t RCC_AHB1ENR;
+	volatile uint32_t RCC_AHB2ENR;
 	uint32_t RESERVED_2[2];
-	uint32_t RCC_APB1ENR;
-	uint32_t RCC_APB2ENR;
+	volatile uint32_t RCC_APB1ENR;
+	volatile uint32_t RCC_APB2ENR;
 	uint32_t RESERVED_3[2];
-	uint32_t RCC_AHB1LPENR;
-	uint32_t RCC_AHB2LPENR;
+	volatile uint32_t RCC_AHB1LPENR;
+	volatile uint32_t RCC_AHB2LPENR;
 	uint32_t RESERVED_4[2];
-	uint32_t RCC_APB1LPENR;
-	uint32_t RCC_APB2LPENR;
+	volatile uint32_t RCC_APB1LPENR;
+	volatile uint32_t RCC_APB2LPENR;
 	uint32_t RESERVED_5[2];
-	uint32_t RCC_BDCR;
-	uint32_t RCC_CSR;
+	volatile uint32_t RCC_BDCR;
+	volatile uint32_t RCC_CSR;
 	uint32_t RESERVED_6[2];
-	uint32_t RCC_SSCGR;
-	uint32_t RCC_PLLI2SCFGR;
+	volatile uint32_t RCC_SSCGR;
+	volatile uint32_t RCC_PLLI2SCFGR;
 	uint32_t RESERVED_7;
-	uint32_t RCC_DCKCFGR;
+	volatile uint32_t RCC_DCKCFGR;
 }RCC_Type;
 
 /** Peripheral RCC base address */
@@ -48,14 +48,14 @@ typedef struct {
 #define IP_RCC                                   ((RCC_Type *)IP_RCC_BASE_ADDR)
 
 typedef struct {
-	uint32_t CR1;
-	uint32_t CR2;
-	uint32_t SR;
-	uint32_t DR;
-	uint32_t CRCPR;
-	uint32_t RXCRCR;
-	uint32_t TXCRCR;
-	uint32_t SPICFGR;
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	volatile uint32_t SR;
+	volatile uint32_t DR;
+	volatile uint32_t CRCPR;
+	volatile uint32_t RXCRCR;
+	volatile uint32_t TXCRCR;
+	volatile uint32_t SPICFGR;
 }LPSPI_Type;
 
 /** Number of instances of the LPSPI module. */

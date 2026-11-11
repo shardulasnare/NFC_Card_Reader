@@ -6,6 +6,7 @@
  */
 
 #include "Mcu.h"
+#include "lpspiNFC.h"
 
 /*******************************************************************************
  ** Function name    : Mcu_InitClock
@@ -40,28 +41,28 @@ void Port_Init(void)
 	GPIOA_MODER_REG |= (1u << 8u);  /* Configure the PA4 pin Chip Select as an Output Mode */
 
 	/* Configure PA5 pin as a Alternate Functionality */
-	GPIOA_MODER_REG &= (3u << 10u); /* Clear the existing values present at bit 10 and bit 11 */
+	GPIOA_MODER_REG &= ~(3u << 10u); /* Clear the existing values present at bit 10 and bit 11 */
 	GPIOA_MODER_REG |= (2u << 10u); /* Configure the PA5 (SCLK) pin as a Alternate Functionality */
 
 	/* Configure PA6 pin as a Alternate Functionality */
-	GPIOA_MODER_REG &= (3u << 12u); /* Clear the existing values present at bit 12 and bit 13 */
+	GPIOA_MODER_REG &= ~(3u << 12u); /* Clear the existing values present at bit 12 and bit 13 */
 	GPIOA_MODER_REG |= (2u << 12u); /* Configure the PA6 (MISO) pin as a Alternate Functionality */
 
 	/* Configure PA7 pin as a Alternate Functionality */
-	GPIOA_MODER_REG &= (3u << 14u); /* Clear the existing values present at bit 14 and bit 15 */
+	GPIOA_MODER_REG &= ~(3u << 14u); /* Clear the existing values present at bit 14 and bit 15 */
 	GPIOA_MODER_REG |= (2u << 14u); /* Configure the PA7 (MOSI) pin as a Alternate Functionality */
 
 	/* Configure PA5 pin as a SCLK */
-	GPIOA_AFRL_REG &= ~(5u << 10u); /* Clear the existing values present at bits 20 to bits 23 bit */
-	GPIOA_AFRL_REG |= (5u << 10u);  /* Configure PA5 as SCLK */
+	GPIOA_AFRL_REG &= ~(0xFu << 20u); /* Clear the existing values present at bits 20 to bits 23 bit */
+	GPIOA_AFRL_REG |= (5u << 20u);    /* Configure PA5 as SCLK (AF5) */
 
 	/* Configure PA6 pin as a MISO */
-	GPIOA_AFRL_REG &= ~(5u << 10u); /* Clear the existing values present at bits 24 to bit 27 bit */
-	GPIOA_AFRL_REG |= (5u << 10u);  /* Configure the PA6 as a MISO */
+	GPIOA_AFRL_REG &= ~(0xFu << 24u); /* Clear the existing values present at bits 24 to bit 27 bit */
+	GPIOA_AFRL_REG |= (5u << 24u);    /* Configure the PA6 as a MISO (AF5) */
 
 	/* Configure PA7 pin as a MOSI */
-	GPIOA_AFRL_REG &= ~(5u << 10u); /* Clear the existing values present at bits 28 to bit 31 bit */
-	GPIOA_AFRL_REG |= (5u << 10u);  /* Configure the PA6 as a MOSI */
+	GPIOA_AFRL_REG &= ~(0xFu << 28u); /* Clear the existing values present at bits 28 to bit 31 bit */
+	GPIOA_AFRL_REG |= (5u << 28u);    /* Configure the PA7 as a MOSI (AF5) */
 }
 
 /*******************************************************************************
@@ -108,7 +109,7 @@ void Spi_Init(void)
 	/* Enable the clock for SPI1 Peripheral */
 	IP_RCC->RCC_APB2ENR &= ~(1u << 12u); /* Clears the existing value at 12th bit */
 	IP_RCC->RCC_APB2ENR |= (1u << 12u);  /* Sets the 12 bit to enable the clock for SPI1 */
-	LPSPI_DRV_MasterInitCfg()
+	LPSPI_DRV_MasterInitCfg(LPSPINFC, &lpspiNFCState, &lpspiNFCCfg);
 }
 
 /*******************************************************************************
@@ -121,7 +122,7 @@ void Spi_Init(void)
 void cs_low(void)
 {
 	/* Make PA4 CS an Output Pin Low */
-	GPIOA_ODR_REG &= (1u << 4u);
+	GPIOA_ODR_REG &= ~(1u << 4u);
 }
 
 /*******************************************************************************

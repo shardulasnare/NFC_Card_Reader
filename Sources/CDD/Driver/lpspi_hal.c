@@ -74,7 +74,8 @@ status_t LPSPI_HAL_SetMasterSlaveMode(LPSPI_Type * base, bool isMaster)
     }
     else
     {
-        base->CR1 = (base->CR1 & (~(0x40u))) | ((uint32_t)isMaster << 6U);
+        /* MSTR is bit 2 of SPI_CR1 */
+        base->CR1 = (base->CR1 & (~(1u << 2U))) | ((uint32_t)isMaster << 2U);
         return STATUS_SUCCESS;
     }
 }

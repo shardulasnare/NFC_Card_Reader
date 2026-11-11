@@ -82,6 +82,8 @@ void SetNFCToPowerDown(bool* const lptru8_fPowerDownAccepted)
 {
     if(CDD_RUN == genu_vNFCCDDState)
     {
+        genu_vNFCShutStatus = CDD_TRX_NOT_STARTED;
+        gu8_cNFCShutRtrCnt = 0u;
         genu_vNFCCDDState = CDD_SHUTDOWN;
         *lptru8_fPowerDownAccepted = TRUE;
     }

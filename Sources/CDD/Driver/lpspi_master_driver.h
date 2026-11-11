@@ -38,8 +38,8 @@ typedef struct
 {
     uint16_t bitsPerFrame;               /*!< Number of bits per frame: 8- to 16-bits; needed for programming */
     volatile bool isTransferInProgress;  /*!< True if there is an active transfer */
-    const uint8_t * volatile txBuff;             /*!< The buffer from which transmitted bytes are taken */
-    uint8_t * volatile rxBuff;                   /*!< The buffer into which received bytes are placed */
+    const volatile uint8_t * volatile txBuff;    /*!< The buffer from which transmitted bytes are taken */
+    volatile uint8_t * volatile rxBuff;          /*!< The buffer into which received bytes are placed */
     volatile uint16_t txFrameCnt;        /*!< Number of bytes from current frame which were already sent */
     volatile uint16_t rxFrameCnt;        /*!< Number of bytes from current frame which were already received */
     volatile bool lsb;                   /*!< True if first bit is LSB and false if first bit is MSB */
@@ -68,16 +68,13 @@ typedef struct
 /*******************************************************************************
  * API
  ******************************************************************************/
-status_t LPSPI_DRV_MasterDeinit(uint16_t instance);
-status_t LPSPI_DRV_MasterSetDelay(uint16_t instance, uint32_t delayBetwenTransfers,
-                        uint32_t delaySCKtoPCS, uint32_t delayPCStoSCK);
-status_t LPSPI_DRV_MasterTransfer(uint16_t instance,
-                                        const uint8_t * volatile sendBuffer,
-                                        uint8_t * receiveBuffer,
-                                        uint16_t transferByteCount);
-void LPSPI_DRV_SingleFrameTransfer(uint16_t instance, const uint8_t * sendBuffer);
-transfer_status_t LPSPI_DRV_GetTransferResult(uint16_t instance, uint32_t *rxData);
-static status_t LPSPI_DRV_MasterAbortTransfer(uint16_t instance);
+status_t LPSPI_DRV_MasterDeinit(uint32_t instance);
+status_t LPSPI_DRV_MasterTransfer(uint32_t instance,
+                                        const volatile uint8_t * const sendBuffer,
+                                        volatile uint8_t * receiveBuffer,
+                                        uint16_t frameCount);
+void LPSPI_DRV_SingleFrameTransfer(uint32_t instance, const uint8_t * sendBuffer);
+transfer_status_t LPSPI_DRV_GetTransferResult(uint32_t instance, uint8_t *rxData);
 void LPSPI_DRV_MasterInitCfg(uint8_t lu8_vInstance, lpspi_state_t *lstr_vStatePtr, const lpspi_master_config_t *lstr_vMasterConfig);
 
 #endif /* SOURCES_CDD_DRIVER_LPSPI_MASTER_DRIVER_H_ */

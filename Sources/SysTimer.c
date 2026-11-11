@@ -32,7 +32,7 @@ void SysTick_Init(void)
 uint32_t SetInterruptTimer(uint32_t value /* Ms */)
 {
 	/* Calculate the number of ticks required for given value */
-	return (((DEFAULT_PROCESSOR_CLOCK_FREQ * value)/ 1000) - 1u);
+	return (((DEFAULT_PROCESSOR_CLOCK_FREQ / 1000u) * value) - 1u);
 }
 
 void SysTimer_waitElapse(void)

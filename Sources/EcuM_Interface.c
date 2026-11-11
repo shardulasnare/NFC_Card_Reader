@@ -7,6 +7,9 @@
 #include "EcuM_Interface.h"
 #include "NFC_CDD_Middleware.h"
 #include "Mcu.h"
+#include "SysTimer.h"
+
+MCU_States_t genu_vMCUState = MCU_STATE_STARTUP1;
 
 void STARTUP1(void)
 {
@@ -15,7 +18,7 @@ void STARTUP1(void)
 	Mcu_InitClock();
 
 	/* Initialize all pins using the Port driver */
-	Port_Init(&Port_Config_BOARD_InitPeripherals);
+	Port_Init();
 
 	/* Initialize Interrupt Settings */
 	Platform_Init();
@@ -23,7 +26,10 @@ void STARTUP1(void)
 	/* Initializes the MCU Peripherals */
 	Peripheral_Init();
 
-	genu_vBMUState = MCU_STATE_STARTUP2;
+	/* Start the 10ms scheduler tick */
+	SysTick_Init();
+
+	genu_vMCUState = MCU_STATE_STARTUP2;
 }
 
 
